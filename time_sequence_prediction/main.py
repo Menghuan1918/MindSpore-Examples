@@ -18,7 +18,6 @@ def data_generate():
     x = np.empty((N, L), "int64")
     x[:] = np.array(range(L)) + np.random.randint(-4 * T, 4 * T, N).reshape(N, 1)
     data = np.sin(x / 1.0 / T).astype(np.float32)
-    print(data.size)
     return data
 
 
@@ -59,15 +58,11 @@ class Net(nn.Cell):
         outputs = ms.ops.Concat(1)(outputs)
         return outputs
 
-class RandomAccessDataset:
-    def __init__(self):
-        data = data_generate()
-        self._data = data[3:, :-1].astype(np.float32)
-        self._label = data[3:, 1:].astype(np.float32)
-    def __getitem__(self, index):
-        return self._data[index], self._label[index]
-    def __len__(self):
-        return len(self._data)
+def Dataconstruct():
+    data = data_generate()
+    get_data = data[3:, :-1].astype(np.float32)
+    label = data[3:, 1:].astype(np.float32)
+    return get_data, label
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -87,7 +82,7 @@ if __name__ == '__main__':
     loss_fn = nn.MSELoss()
     optimizer = nn.SGD(seq.trainable_params(), learning_rate=0.8)
     model = Model(network=seq, loss_fn=loss_fn, optimizer=optimizer)
-    loader = RandomAccessDataset()
+    loader = Dataconstruct()
     train_data = ds.GeneratorDataset(source=loader,column_names=["data", "label"])
     # train the model
     for i in range(opt.steps):
