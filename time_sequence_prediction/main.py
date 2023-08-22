@@ -7,8 +7,9 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 import mindspore.dataset as ds
 import matplotlib.pyplot as plt
-from mindspore.train import Model,LearningRateScheduler
+from mindspore.train import Model
 from mindvision.engine.callback import LossMonitor
+import mindspore.dataset.transforms as trans
 
 def data_generate():
     np.random.seed(2)
@@ -62,7 +63,9 @@ def Dataconstruct():
     data = data_generate()
     get_data = data[3:, :-1].astype(np.float32)
     label = data[3:, 1:].astype(np.float32)
-    return get_data, label
+    dataset = data.map(get_data,'data')
+    dataset = label.map(label,'label')
+    return dataset
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -82,8 +85,8 @@ if __name__ == '__main__':
     loss_fn = nn.MSELoss()
     optimizer = nn.SGD(seq.trainable_params(), learning_rate=0.8)
     model = Model(network=seq, loss_fn=loss_fn, optimizer=optimizer)
-    loader = Dataconstruct()
-    train_data = ds.GeneratorDataset(source=loader,column_names=["data", "label"])
+    #train_data = ds.GeneratorDataset(source=list(Dataconstruct()),column_names=["data", "label"])
+    train_data = Dataconstruct()
     # train the model
     for i in range(opt.steps):
         print('step: ', i)
