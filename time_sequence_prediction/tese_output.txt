@@ -1,0 +1,141 @@
+ (mind) root@autodl-container-a303478cdd-5334289b:~# /root/miniconda3/envs/mind/bin/python /root/test.py
+step:  0
+Epoch:[  0/  1], step:[    1/   97], loss:[0.505/0.505], time:57371.137 ms, lr:0.01000
+Epoch:[  0/  1], step:[    2/   97], loss:[0.514/0.510], time:7660.725 ms, lr:0.01000
+Epoch:[  0/  1], step:[    3/   97], loss:[0.515/0.511], time:7514.514 ms, lr:0.01000
+Epoch:[  0/  1], step:[    4/   97], loss:[0.524/0.515], time:7445.297 ms, lr:0.01000
+Epoch:[  0/  1], step:[    5/   97], loss:[0.535/0.519], time:7347.224 ms, lr:0.01000
+Epoch:[  0/  1], step:[    6/   97], loss:[0.546/0.523], time:7573.778 ms, lr:0.01000
+Epoch:[  0/  1], step:[    7/   97], loss:[0.555/0.528], time:7590.438 ms, lr:0.01000
+Epoch:[  0/  1], step:[    8/   97], loss:[0.567/0.533], time:7601.900 ms, lr:0.01000
+Epoch:[  0/  1], step:[    9/   97], loss:[0.573/0.537], time:7667.809 ms, lr:0.01000
+Epoch:[  0/  1], step:[   10/   97], loss:[0.573/0.541], time:7497.933 ms, lr:0.01000
+Epoch:[  0/  1], step:[   11/   97], loss:[0.555/0.542], time:7674.920 ms, lr:0.01000
+Epoch:[  0/  1], step:[   12/   97], loss:[0.543/0.542], time:7514.439 ms, lr:0.01000
+Epoch:[  0/  1], step:[   13/   97], loss:[0.538/0.542], time:7613.868 ms, lr:0.01000
+Epoch:[  0/  1], step:[   14/   97], loss:[0.530/0.541], time:7403.347 ms, lr:0.01000
+Epoch:[  0/  1], step:[   15/   97], loss:[0.521/0.540], time:7467.146 ms, lr:0.01000
+Epoch:[  0/  1], step:[   16/   97], loss:[0.512/0.538], time:7527.702 ms, lr:0.01000
+Epoch:[  0/  1], step:[   17/   97], loss:[0.509/0.536], time:7012.875 ms, lr:0.01000
+Epoch:[  0/  1], step:[   18/   97], loss:[0.509/0.535], time:7551.719 ms, lr:0.01000
+Epoch:[  0/  1], step:[   19/   97], loss:[0.508/0.533], time:7394.536 ms, lr:0.01000
+Epoch:[  0/  1], step:[   20/   97], loss:[0.506/0.532], time:7487.066 ms, lr:0.01000
+Epoch:[  0/  1], step:[   21/   97], loss:[0.501/0.530], time:7399.388 ms, lr:0.01000
+Epoch:[  0/  1], step:[   22/   97], loss:[0.502/0.529], time:7429.535 ms, lr:0.01000
+Epoch:[  0/  1], step:[   23/   97], loss:[0.503/0.528], time:7433.559 ms, lr:0.01000
+Epoch:[  0/  1], step:[   24/   97], loss:[0.503/0.527], time:7460.206 ms, lr:0.01000
+Epoch:[  0/  1], step:[   25/   97], loss:[0.504/0.526], time:7459.823 ms, lr:0.01000
+Epoch:[  0/  1], step:[   26/   97], loss:[0.498/0.525], time:7409.230 ms, lr:0.01000
+Epoch:[  0/  1], step:[   27/   97], loss:[0.501/0.524], time:7470.931 ms, lr:0.01000
+Epoch:[  0/  1], step:[   28/   97], loss:[0.498/0.523], time:7165.890 ms, lr:0.01000
+Epoch:[  0/  1], step:[   29/   97], loss:[0.502/0.522], time:7548.576 ms, lr:0.01000
+Epoch:[  0/  1], step:[   30/   97], loss:[0.503/0.522], time:7560.984 ms, lr:0.01000
+Epoch:[  0/  1], step:[   31/   97], loss:[0.497/0.521], time:7246.871 ms, lr:0.01000
+Epoch:[  0/  1], step:[   32/   97], loss:[0.497/0.520], time:7530.937 ms, lr:0.01000
+Epoch:[  0/  1], step:[   33/   97], loss:[0.501/0.520], time:7446.244 ms, lr:0.01000
+Epoch:[  0/  1], step:[   34/   97], loss:[0.499/0.519], time:7583.888 ms, lr:0.01000
+Epoch:[  0/  1], step:[   35/   97], loss:[0.497/0.518], time:7575.115 ms, lr:0.01000
+Epoch:[  0/  1], step:[   36/   97], loss:[0.499/0.518], time:7470.495 ms, lr:0.01000
+Epoch:[  0/  1], step:[   37/   97], loss:[0.502/0.517], time:7288.365 ms, lr:0.01000
+Epoch:[  0/  1], step:[   38/   97], loss:[0.503/0.517], time:7636.923 ms, lr:0.01000
+Epoch:[  0/  1], step:[   39/   97], loss:[0.502/0.517], time:7661.022 ms, lr:0.01000
+Epoch:[  0/  1], step:[   40/   97], loss:[0.503/0.516], time:7025.616 ms, lr:0.01000
+Epoch:[  0/  1], step:[   41/   97], loss:[0.503/0.516], time:7461.635 ms, lr:0.01000
+Epoch:[  0/  1], step:[   42/   97], loss:[0.497/0.516], time:7397.964 ms, lr:0.01000
+Epoch:[  0/  1], step:[   43/   97], loss:[0.502/0.515], time:7404.544 ms, lr:0.01000
+Epoch:[  0/  1], step:[   44/   97], loss:[0.498/0.515], time:7355.820 ms, lr:0.01000
+Epoch:[  0/  1], step:[   45/   97], loss:[0.497/0.514], time:7525.943 ms, lr:0.01000
+Epoch:[  0/  1], step:[   46/   97], loss:[0.503/0.514], time:7442.372 ms, lr:0.01000
+Epoch:[  0/  1], step:[   47/   97], loss:[0.501/0.514], time:7056.466 ms, lr:0.01000
+Epoch:[  0/  1], step:[   48/   97], loss:[0.498/0.514], time:7364.476 ms, lr:0.01000
+Epoch:[  0/  1], step:[   49/   97], loss:[0.501/0.513], time:7587.094 ms, lr:0.01000
+Epoch:[  0/  1], step:[   50/   97], loss:[0.503/0.513], time:7533.530 ms, lr:0.01000
+Epoch:[  0/  1], step:[   51/   97], loss:[0.502/0.513], time:7356.989 ms, lr:0.01000
+Epoch:[  0/  1], step:[   52/   97], loss:[0.503/0.513], time:7470.308 ms, lr:0.01000
+Epoch:[  0/  1], step:[   53/   97], loss:[0.502/0.513], time:7443.937 ms, lr:0.01000
+Epoch:[  0/  1], step:[   54/   97], loss:[0.499/0.512], time:7373.790 ms, lr:0.01000
+Epoch:[  0/  1], step:[   55/   97], loss:[0.501/0.512], time:7399.726 ms, lr:0.01000
+Epoch:[  0/  1], step:[   56/   97], loss:[0.498/0.512], time:7527.487 ms, lr:0.01000
+Epoch:[  0/  1], step:[   57/   97], loss:[0.502/0.512], time:7601.341 ms, lr:0.01000
+Epoch:[  0/  1], step:[   58/   97], loss:[0.501/0.511], time:7289.593 ms, lr:0.01000
+Epoch:[  0/  1], step:[   59/   97], loss:[0.503/0.511], time:7190.201 ms, lr:0.01000
+Epoch:[  0/  1], step:[   60/   97], loss:[0.503/0.511], time:7261.160 ms, lr:0.01000
+Epoch:[  0/  1], step:[   61/   97], loss:[0.497/0.511], time:7098.404 ms, lr:0.01000
+Epoch:[  0/  1], step:[   62/   97], loss:[0.500/0.511], time:7640.925 ms, lr:0.01000
+Epoch:[  0/  1], step:[   63/   97], loss:[0.500/0.511], time:7007.704 ms, lr:0.01000
+Epoch:[  0/  1], step:[   64/   97], loss:[0.503/0.511], time:7274.188 ms, lr:0.01000
+Epoch:[  0/  1], step:[   65/   97], loss:[0.498/0.510], time:7626.768 ms, lr:0.01000
+Epoch:[  0/  1], step:[   66/   97], loss:[0.499/0.510], time:7495.388 ms, lr:0.01000
+Epoch:[  0/  1], step:[   67/   97], loss:[0.501/0.510], time:7484.028 ms, lr:0.01000
+Epoch:[  0/  1], step:[   68/   97], loss:[0.503/0.510], time:7408.136 ms, lr:0.01000
+Epoch:[  0/  1], step:[   69/   97], loss:[0.503/0.510], time:7409.411 ms, lr:0.01000
+Epoch:[  0/  1], step:[   70/   97], loss:[0.503/0.510], time:7470.750 ms, lr:0.01000
+Epoch:[  0/  1], step:[   71/   97], loss:[0.498/0.510], time:7170.767 ms, lr:0.01000
+Epoch:[  0/  1], step:[   72/   97], loss:[0.497/0.509], time:7629.192 ms, lr:0.01000
+Epoch:[  0/  1], step:[   73/   97], loss:[0.503/0.509], time:7759.130 ms, lr:0.01000
+Epoch:[  0/  1], step:[   74/   97], loss:[0.497/0.509], time:7366.262 ms, lr:0.01000
+Epoch:[  0/  1], step:[   75/   97], loss:[0.498/0.509], time:7508.863 ms, lr:0.01000
+Epoch:[  0/  1], step:[   76/   97], loss:[0.503/0.509], time:7559.052 ms, lr:0.01000
+Epoch:[  0/  1], step:[   77/   97], loss:[0.498/0.509], time:7575.541 ms, lr:0.01000
+Epoch:[  0/  1], step:[   78/   97], loss:[0.501/0.509], time:7490.160 ms, lr:0.01000
+Epoch:[  0/  1], step:[   79/   97], loss:[0.498/0.509], time:7348.447 ms, lr:0.01000
+Epoch:[  0/  1], step:[   80/   97], loss:[0.503/0.508], time:7345.171 ms, lr:0.01000
+Epoch:[  0/  1], step:[   81/   97], loss:[0.503/0.508], time:7440.831 ms, lr:0.01000
+Epoch:[  0/  1], step:[   82/   97], loss:[0.501/0.508], time:7549.022 ms, lr:0.01000
+Epoch:[  0/  1], step:[   83/   97], loss:[0.503/0.508], time:7326.725 ms, lr:0.01000
+Epoch:[  0/  1], step:[   84/   97], loss:[0.499/0.508], time:7479.484 ms, lr:0.01000
+Epoch:[  0/  1], step:[   85/   97], loss:[0.499/0.508], time:7558.538 ms, lr:0.01000
+Epoch:[  0/  1], step:[   86/   97], loss:[0.503/0.508], time:7335.735 ms, lr:0.01000
+Epoch:[  0/  1], step:[   87/   97], loss:[0.503/0.508], time:6909.213 ms, lr:0.01000
+Epoch:[  0/  1], step:[   88/   97], loss:[0.500/0.508], time:7559.214 ms, lr:0.01000
+Epoch:[  0/  1], step:[   89/   97], loss:[0.502/0.508], time:7456.321 ms, lr:0.01000
+Epoch:[  0/  1], step:[   90/   97], loss:[0.499/0.508], time:7539.944 ms, lr:0.01000
+Epoch:[  0/  1], step:[   91/   97], loss:[0.499/0.508], time:7459.358 ms, lr:0.01000
+Epoch:[  0/  1], step:[   92/   97], loss:[0.503/0.507], time:6446.635 ms, lr:0.01000
+Epoch:[  0/  1], step:[   93/   97], loss:[0.501/0.507], time:7118.067 ms, lr:0.01000
+Epoch:[  0/  1], step:[   94/   97], loss:[0.499/0.507], time:7384.637 ms, lr:0.01000
+Epoch:[  0/  1], step:[   95/   97], loss:[0.502/0.507], time:7357.873 ms, lr:0.01000
+Epoch:[  0/  1], step:[   96/   97], loss:[0.498/0.507], time:7242.402 ms, lr:0.01000
+Epoch:[  0/  1], step:[   97/   97], loss:[0.498/0.507], time:6935.708 ms, lr:0.01000
+Epoch time: 769638.617 ms, per step time: 7934.419 ms, avg loss: 0.507
+!!After train!!
+Traceback (most recent call last):
+  File "/root/test.py", line 98, in <module>
+    pred = seq(test_input, future=future)
+  File "/root/miniconda3/envs/mind/lib/python3.9/site-packages/mindspore/nn/cell.py", line 662, in __call__
+    raise err
+  File "/root/miniconda3/envs/mind/lib/python3.9/site-packages/mindspore/nn/cell.py", line 658, in __call__
+    output = self._run_construct(args, kwargs)
+  File "/root/miniconda3/envs/mind/lib/python3.9/site-packages/mindspore/nn/cell.py", line 442, in _run_construct
+    output = self.construct(*cast_inputs, **kwargs)
+  File "/root/test.py", line 47, in construct
+    output, (h_t, c_t) = self.lstm1(input_t, (h_t, c_t))  # Unpack the outputs
+  File "/root/miniconda3/envs/mind/lib/python3.9/site-packages/mindspore/nn/cell.py", line 662, in __call__
+    raise err
+  File "/root/miniconda3/envs/mind/lib/python3.9/site-packages/mindspore/nn/cell.py", line 658, in __call__
+    output = self._run_construct(args, kwargs)
+  File "/root/miniconda3/envs/mind/lib/python3.9/site-packages/mindspore/nn/cell.py", line 442, in _run_construct
+    output = self.construct(*cast_inputs, **kwargs)
+  File "/root/miniconda3/envs/mind/lib/python3.9/site-packages/mindspore/nn/layer/rnns.py", line 576, in construct
+    return x_n.astype(x_dtype), (hx_n[0].astype(x_dtype), hx_n[1].astype(x_dtype))
+  File "/root/miniconda3/envs/mind/lib/python3.9/site-packages/mindspore/common/tensor.py", line 2052, in astype
+    return tensor_operator_registry.get('cast')(self, dtype)
+  File "/root/miniconda3/envs/mind/lib/python3.9/site-packages/mindspore/ops/primitive.py", line 311, in __call__
+    should_elim, output = self.check_elim(*args)
+  File "/root/miniconda3/envs/mind/lib/python3.9/site-packages/mindspore/ops/operations/array_ops.py", line 383, in check_elim
+    if isinstance(x, Tensor) and x.dtype == dtype and not is_pack_tensor(x):
+  File "/root/miniconda3/envs/mind/lib/python3.9/site-packages/mindspore/common/_stub_tensor.py", line 94, in dtype
+    self.stub_dtype = self.stub.get_dtype()
+ValueError: For primitive[LSTM], the h_shape[1] must be equal to 999, but got 1.
+
+----------------------------------------------------
+- C++ Call Stack: (For framework developers)
+----------------------------------------------------
+mindspore/core/utils/check_convert_utils.cc:510 CheckInteger
+
+[ERROR] PIPELINE(4121,7f0203b81280,python):2023-09-26-23:03:21.409.371 [mindspore/ccsrc/pipeline/jit/pipeline.cc:2311] ClearResAtexit] Check exception before process exit: For primitive[LSTM], the h_shape[1] must be equal to 999, but got 1.
+
+----------------------------------------------------
+- C++ Call Stack: (For framework developers)
+----------------------------------------------------
+mindspore/core/utils/check_convert_utils.cc:510 CheckInteger

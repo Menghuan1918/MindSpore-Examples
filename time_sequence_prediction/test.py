@@ -1,85 +1,117 @@
-import os
-import pickle
 import numpy as np
-import mindspore
-from mindspore.dataset import GeneratorDataset
+import argparse
+import matplotlib
+matplotlib.use('Agg')
+import mindspore as ms
+import mindspore.nn as nn
+import mindspore.ops as ops
+import mindspore.dataset as ds
+import matplotlib.pyplot as plt
+from mindspore.train import Model
+from mindvision.engine.callback import LossMonitor
+import mindspore.dataset.transforms as trans
+
+def data_generate():
+    np.random.seed(2)
+    T = 20
+    L = 1000
+    N = 100
+    x = np.empty((N, L), "int64")
+    x[:] = np.array(range(L)) + np.random.randint(-4 * T, 4 * T, N).reshape(N, 1)
+    data = np.sin(x / 1.0 / T).astype(np.float32)
+    return data
 
 
-class CIFAR10(object):
-    train_list = [
-        'data_batch_1',
-        'data_batch_2',
-        'data_batch_3',
-        'data_batch_4',
-        'data_batch_5',
-    ]
+class Net(nn.Cell):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.lstm1 = nn.LSTM(1, 51)
+        self.lstm2 = nn.LSTM(51, 51)
+        self.linear = nn.Dense(51, 1)
 
-    test_list = [
-        'test_batch',
-    ]
-
-    def __init__(self, root, train, transform=None, target_transform=None):
-        super(CIFAR10, self).__init__()
-
-        self.root = root
-        self.train = train  # training set or test set
-        
-        if self.train:
-            downloaded_list = self.train_list
-        else:
-            downloaded_list = self.test_list
-        self.data = []
-        self.targets = []
-        self.transform = transform
-        self.target_transform = target_transform
-
-        # now load the picked numpy arrays
-        for file_name in downloaded_list:
-            file_path = os.path.join(self.root, file_name)
-            with open(file_path, 'rb') as f:
-                entry = pickle.load(f, encoding='latin1')
-                self.data.append(entry['data'])
-                if 'labels' in entry:
-                    self.targets.extend(entry['labels'])
-                else:
-                    self.targets.extend(entry['fine_labels'])
-    
-        self.data = np.vstack(self.data).reshape(-1, 3, 32, 32)
-        self.data = self.data.transpose((0, 2, 3, 1))  # convert to HWC
-
-    def __getitem__(self, index):
-        """
-        Args:
-            index (int): Index
-
-        Returns:
-            tuple: (image, target) where target is index of the target class.
-        """
-        img, target = self.data[index], self.targets[index]
-
-        # doing this so that it is consistent with all other datasets
-        # to return a PIL Image
-        img = Image.fromarray(img)
-
-        if self.transform is not None:
-            img = self.transform(img)
-
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        return img, target
+    def construct(self, input, future=0):
+        outputs = []
+        #print("A")
+        #print(input.shape)
+        a = input.shape[0]
+        h_t = ops.zeros((1, 1, 51), dtype=ms.float32)
+        c_t = ops.zeros((1, 1, 51), dtype=ms.float32)
+        h_t2 = ops.zeros((1, 1, 51), dtype=ms.float32)
+        c_t2 = ops.zeros((1, 1, 51), dtype=ms.float32)
+        #print("B")
+        #print(input.shape)
+        for input_t in ops.split(ms.Tensor(input), 1):
+            input_t = input_t.reshape((1, -1, 1))  # Reshape input_t
+            # print("C")
+            # print(input_t.shape)
+            output, (h_t, c_t) = self.lstm1(input_t, (h_t, c_t))  # Unpack the outputs
+            output, (h_t2, c_t2) = self.lstm2(output, (h_t2, c_t2))  # Unpack the outputs
+            output = self.linear(output)
+            outputs += [output]
+        #print("AAAAAAAAAAAA")
+        for i in range(future):
+            input_t = input_t.reshape((1, -1, 1))  # Reshape input_t
+            output, (h_t, c_t) = self.lstm1(input_t, (h_t, c_t))  # Unpack the outputs
+            output, (h_t2, c_t2) = self.lstm2(output, (h_t2, c_t2))  # Unpack the outputs
+            output = self.linear(output)
+            outputs += [output]
+        #print("BBBBBBBBBBB")
+        outputs = ms.ops.Concat(1)(outputs)
+        return outputs
 
 
-    def __len__(self):
-        return len(self.data)
+def Dataconstruct():
+    data = data_generate()
+    get_data = data[3:, :-1].astype(np.float32)
+    label = data[3:, 1:].astype(np.float32)
+    dataset = ds.NumpySlicesDataset({"data": get_data, "label": label}, shuffle=False)
+    return dataset
 
-cifar10_test = CIFAR10(root="./cifar10/cifar-10-batches-py", train=False)
-cifar10_test = GeneratorDataset(source=cifar10_test, column_names=["image", "label"])
-cifar10_test = cifar10_test.batch(128)
-for data in cifar10_test.create_dict_iterator():
-    print(data["image"].shape, data["label"].shape)
 
-(128, 32, 32, 3) (128,)
-(128, 32, 32, 3) (128,)
-(128, 32, 32, 3) (128,)
-(128, 32, 32, 3) (128,)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--steps', type=int, default=15, help='steps to run')
+    opt = parser.parse_args()
+    # set random seed to 0
+    ms.set_seed(0)
+    #load the data
+    data = data_generate()
+    input = data[3:, :-1]
+    target = data[3:, 1:]
+    test_input = ms.Tensor(data[:3, :-1], ms.float32)
+    test_target = ms.Tensor(data[:3, 1:], ms.float32)
+    # build the model
+    seq = Net()
+    # loss and optimizer
+    loss_fn = nn.MSELoss()
+    optimizer = nn.SGD(seq.trainable_params(), learning_rate=0.8)
+    model = Model(network=seq, loss_fn=loss_fn, optimizer=optimizer)
+    #train_data = ds.GeneratorDataset(source=list(Dataconstruct()),column_names=["data", "label"])
+    train_data = Dataconstruct()
+    # train the model
+    for i in range(opt.steps):
+        print('step: ', i)
+        model.train(epoch = 1, train_dataset = train_data,callbacks=[LossMonitor(0.01, 1)])
+        # begin to predict !!!!!!!!!!!!!!!!!!!!!!!!!
+        print("!!After train!!")
+        future = 1000
+        pred = seq(test_input, future=future)
+        loss = loss_fn(pred[:, :-future], test_target)
+        print("test loss is {}".format(loss))
+        y = pred.asnumpy()
+
+        # draw the result
+        plt.figure(figsize=(30, 10))
+        plt.title('Predict future values for time sequences\n(Dashlines are predicted values)', fontsize=30)
+        plt.xlabel('x', fontsize=20)
+        plt.ylabel('y', fontsize=20)
+        plt.xticks(fontsize=20)
+        plt.yticks(fontsize=20)
+        def draw(yi, color):
+            plt.plot(np.arange(input.size(1)), yi[:input.size(1)], color, linewidth = 2.0)
+            plt.plot(np.arange(input.size(1), input.size(1) + future), yi[input.size(1):], color + ':', linewidth = 2.0)
+        draw(y[0], 'r')
+        draw(y[1], 'g')
+        draw(y[2], 'b')
+        plt.savefig('predict%d.pdf'%i)
+        plt.close()
