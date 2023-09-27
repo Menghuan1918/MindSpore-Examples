@@ -31,41 +31,42 @@ class Net(nn.Cell):
 
     def construct(self, input, future=0):
         outputs = []
-        print(input.shape)
+        #print("A")
+        #print(input.shape)
         a = input.shape[0]
-        h_t = ops.zeros((a, 51),dtype=ms.float32)
-        c_t = ops.zeros((a, 51),dtype=ms.float32)
-        h_t2 = ops.zeros((a, 51),dtype=ms.float32)
-        c_t2 = ops.zeros((a, 51),dtype=ms.float32)
-        #output = ops.zeros((2, 2), dtype=ms.float32).asnumpy()
-        print(input.shape)
-        for input_t in ops.split(ms.Tensor(input),1):
-            print(input_t.shape)
-            aaa = self.lstm1(input_t)
-            #aaa = self.lstm1(input_t, (h_t, c_t))
-            print(aaa.shape)
-            h_t,c_t = aaa
-            aaa2 = self.lstm2(h_t, (h_t2, c_t2))
-            h_t2, c_t2 = aaa2
-            output = self.linear(h_t2)
+        h_t = ops.zeros((1, 1, 51), dtype=ms.float32)
+        c_t = ops.zeros((1, 1, 51), dtype=ms.float32)
+        h_t2 = ops.zeros((1, 1, 51), dtype=ms.float32)
+        c_t2 = ops.zeros((1, 1, 51), dtype=ms.float32)
+        #print("B")
+        #print(input.shape)
+        for input_t in ops.split(ms.Tensor(input), 1):
+            input_t = input_t.reshape((1, -1, 1))  # Reshape input_t
+            # print("C")
+            # print(input_t.shape)
+            output, (h_t, c_t) = self.lstm1(input_t, (h_t, c_t))  # Unpack the outputs
+            output, (h_t2, c_t2) = self.lstm2(output, (h_t2, c_t2))  # Unpack the outputs
+            output = self.linear(output)
             outputs += [output]
-        
+        #print("AAAAAAAAAAAA")
         for i in range(future):
-            h_t, c_t = self.lstm1(input_t, (h_t, c_t))
-            h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
-            output = self.linear(h_t2)
+            input_t = input_t.reshape((1, -1, 1))  # Reshape input_t
+            output, (h_t, c_t) = self.lstm1(input_t, (h_t, c_t))  # Unpack the outputs
+            output, (h_t2, c_t2) = self.lstm2(output, (h_t2, c_t2))  # Unpack the outputs
+            output = self.linear(output)
             outputs += [output]
-
+        #print("BBBBBBBBBBB")
         outputs = ms.ops.Concat(1)(outputs)
         return outputs
+
 
 def Dataconstruct():
     data = data_generate()
     get_data = data[3:, :-1].astype(np.float32)
     label = data[3:, 1:].astype(np.float32)
-    dataset = data.map(get_data,'data')
-    dataset = label.map(label,'label')
+    dataset = ds.NumpySlicesDataset({"data": get_data, "label": label}, shuffle=False)
     return dataset
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -90,7 +91,7 @@ if __name__ == '__main__':
     # train the model
     for i in range(opt.steps):
         print('step: ', i)
-        model.train(epoch = 1, train_dataset = train_data,callbacks=[LossMonitor(0.01, 10)])
+        model.train(epoch = 1, train_dataset = train_data,callbacks=[LossMonitor(0.01, 1)])
         # begin to predict !!!!!!!!!!!!!!!!!!!!!!!!!
         print("!!After train!!")
         future = 1000
@@ -99,7 +100,6 @@ if __name__ == '__main__':
         print("test loss is {}".format(loss))
         y = pred.asnumpy()
 
-        
         # draw the result
         plt.figure(figsize=(30, 10))
         plt.title('Predict future values for time sequences\n(Dashlines are predicted values)', fontsize=30)
