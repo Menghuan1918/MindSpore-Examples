@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from mindspore.train import Model
 from mindvision.engine.callback import LossMonitor
 import mindspore.dataset.transforms as trans
-
+from mindspore import load_checkpoint, load_param_into_net
 def data_generate():
     np.random.seed(2)
     T = 20
@@ -21,7 +21,6 @@ def data_generate():
     data = np.sin(x / 1.0 / T).astype(np.float32)
     return data
 
-
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -31,35 +30,28 @@ class Net(nn.Cell):
 
     def construct(self, input, future=0):
         outputs = []
-        #print("A")
-        #print(input.shape)
-        a = input.shape[0]
         h_t = ops.zeros((1, 1, 51), dtype=ms.float32)
         c_t = ops.zeros((1, 1, 51), dtype=ms.float32)
         h_t2 = ops.zeros((1, 1, 51), dtype=ms.float32)
         c_t2 = ops.zeros((1, 1, 51), dtype=ms.float32)
-        #print("B")
-        #print(input.shape)
+
         for input_t in ops.split(ms.Tensor(input), 1):
             input_t = input_t.reshape((1, -1, 1))  # Reshape input_t
-            # print("C")
-            # print(input_t.shape)
             output, (h_t, c_t) = self.lstm1(input_t, (h_t, c_t))  # Unpack the outputs
             output, (h_t2, c_t2) = self.lstm2(output, (h_t2, c_t2))  # Unpack the outputs
             output = self.linear(output)
             outputs += [output]
-        #print("AAAAAAAAAAAA")
+
         for i in range(future):
             input_t = input_t.reshape((1, -1, 1))  # Reshape input_t
             output, (h_t, c_t) = self.lstm1(input_t, (h_t, c_t))  # Unpack the outputs
             output, (h_t2, c_t2) = self.lstm2(output, (h_t2, c_t2))  # Unpack the outputs
             output = self.linear(output)
             outputs += [output]
-        #print("BBBBBBBBBBB")
+
         outputs = ms.ops.Concat(1)(outputs)
         return outputs
-
-
+    
 def Dataconstruct():
     data = data_generate()
     get_data = data[3:, :-1].astype(np.float32)
@@ -67,51 +59,74 @@ def Dataconstruct():
     dataset = ds.NumpySlicesDataset({"data": get_data, "label": label}, shuffle=False)
     return dataset
 
+def Dataconstruct_test():
+    data = data_generate()
+    get_data = data[:3, :-1].astype(np.float32)
+    dataset = ds.NumpySlicesDataset({"data": get_data}, shuffle=False)
+    return dataset
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--steps', type=int, default=15, help='steps to run')
+    parser.add_argument('--steps', type=int, default=10, help='steps to run')
     opt = parser.parse_args()
     # set random seed to 0
     ms.set_seed(0)
     #load the data
     data = data_generate()
-    input = data[3:, :-1]
-    target = data[3:, 1:]
-    test_input = ms.Tensor(data[:3, :-1], ms.float32)
-    test_target = ms.Tensor(data[:3, 1:], ms.float32)
     # build the model
     seq = Net()
     # loss and optimizer
     loss_fn = nn.MSELoss()
     optimizer = nn.SGD(seq.trainable_params(), learning_rate=0.8)
     model = Model(network=seq, loss_fn=loss_fn, optimizer=optimizer)
-    #train_data = ds.GeneratorDataset(source=list(Dataconstruct()),column_names=["data", "label"])
     train_data = Dataconstruct()
-    # train the model
-    for i in range(opt.steps):
-        print('step: ', i)
-        model.train(epoch = 1, train_dataset = train_data,callbacks=[LossMonitor(0.01, 1)])
-        # begin to predict !!!!!!!!!!!!!!!!!!!!!!!!!
-        print("!!After train!!")
-        future = 1000
-        pred = seq(test_input, future=future)
-        loss = loss_fn(pred[:, :-future], test_target)
-        print("test loss is {}".format(loss))
-        y = pred.asnumpy()
 
-        # draw the result
-        plt.figure(figsize=(30, 10))
-        plt.title('Predict future values for time sequences\n(Dashlines are predicted values)', fontsize=30)
-        plt.xlabel('x', fontsize=20)
-        plt.ylabel('y', fontsize=20)
-        plt.xticks(fontsize=20)
-        plt.yticks(fontsize=20)
-        def draw(yi, color):
-            plt.plot(np.arange(input.size(1)), yi[:input.size(1)], color, linewidth = 2.0)
-            plt.plot(np.arange(input.size(1), input.size(1) + future), yi[input.size(1):], color + ':', linewidth = 2.0)
-        draw(y[0], 'r')
-        draw(y[1], 'g')
-        draw(y[2], 'b')
-        plt.savefig('predict%d.pdf'%i)
-        plt.close()
+for i in range(opt.steps):
+    print('step: ', i)
+    model.train(epoch = 1, train_dataset = train_data,callbacks=[LossMonitor(0.01, 1)])
+    # 保存模型
+    print("Saving.....")
+    save_checkpoint_path = "lstm_model.ckpt"
+    ms.save_checkpoint(seq, save_checkpoint_path)
+    # 加载模型
+    print("Loading.....")
+    loaded_seq = Net()
+    param_dict = load_checkpoint(save_checkpoint_path)
+    param_not_load = load_param_into_net(loaded_seq, param_dict)
+    loaded_model = Model(network=loaded_seq, loss_fn=loss_fn, optimizer=optimizer)
+
+    predictions = []
+    predictions_data = []
+    predictions_data = data_generate()
+    #Add data to predictions
+    last_train_input = Dataconstruct_test()
+    print("Start")
+
+    for data in last_train_input.create_dict_iterator():
+        input_tensor = data["data"]
+        predicted = loaded_model.predict(input_tensor)
+        predictions.append(predicted.asnumpy())
+
+    predictions = np.array(predictions)
+    predictions_data = np.array(predictions_data)
+    print(predictions.shape)
+    print("Start plt")
+    # 将预测结果绘制出来
+    plt.figure(figsize=(18, 6))
+    plt.title("Predictions for Next 1000 Points")
+    def draw_data(yi, color):
+        plt.plot(np.arange(yi.shape[0]), yi[:], color, linewidth=2.0)
+    print(predictions_data.shape)
+    draw_data(predictions_data[0], 'r')
+    draw_data(predictions_data[1], 'g')
+    draw_data(predictions_data[2], 'b')
+
+    def draw(yi, color):
+        plt.plot(np.arange(yi.shape[1]) + 1000, yi[0, :, 0], color + ':', linewidth=2.0)
+
+    draw(predictions[0, :, :, :], 'r')
+    draw(predictions[1, :, :, :], 'g')
+    draw(predictions[2, :, :, :], 'b')
+
+    plt.legend(['Prediction 1', 'Prediction 1 Future', 'Prediction 2', 'Prediction 2 Future', 'Prediction 3', 'Prediction 3 Future'])
+    plt.savefig('predict%d.pdf'%i)

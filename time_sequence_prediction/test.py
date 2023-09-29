@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from mindspore.train import Model
 from mindvision.engine.callback import LossMonitor
 import mindspore.dataset.transforms as trans
-
+from mindspore import load_checkpoint, load_param_into_net
 def data_generate():
     np.random.seed(2)
     T = 20
@@ -51,8 +51,7 @@ class Net(nn.Cell):
 
         outputs = ms.ops.Concat(1)(outputs)
         return outputs
-
-
+    
 def Dataconstruct():
     data = data_generate()
     get_data = data[3:, :-1].astype(np.float32)
@@ -68,7 +67,7 @@ def Dataconstruct_test():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--steps', type=int, default=1, help='steps to run')
+    parser.add_argument('--steps', type=int, default=10, help='steps to run')
     opt = parser.parse_args()
     # set random seed to 0
     ms.set_seed(0)
@@ -78,49 +77,56 @@ if __name__ == '__main__':
     seq = Net()
     # loss and optimizer
     loss_fn = nn.MSELoss()
-    optimizer = nn.SGD(seq.trainable_params(), learning_rate=0.8)
+    optimizer = nn.Adam(seq.trainable_params(), learning_rate=0.5)
     model = Model(network=seq, loss_fn=loss_fn, optimizer=optimizer)
     train_data = Dataconstruct()
 
-from mindspore import load_checkpoint, load_param_into_net
 for i in range(opt.steps):
     print('step: ', i)
     model.train(epoch = 1, train_dataset = train_data,callbacks=[LossMonitor(0.01, 1)])
-# 保存模型
-print("Saving.....")
-save_checkpoint_path = "lstm_model.ckpt"
-ms.save_checkpoint(seq, save_checkpoint_path)
-# 加载模型
-print("Loading.....")
-loaded_seq = Net()
-param_dict = load_checkpoint(save_checkpoint_path)
-param_not_load = load_param_into_net(loaded_seq, param_dict)
-loaded_model = Model(network=loaded_seq, loss_fn=loss_fn, optimizer=optimizer)
+    # 保存模型
+    print("Saving.....")
+    save_checkpoint_path = "lstm_model.ckpt"
+    ms.save_checkpoint(seq, save_checkpoint_path)
+    # 加载模型
+    print("Loading.....")
+    loaded_seq = Net()
+    param_dict = load_checkpoint(save_checkpoint_path)
+    param_not_load = load_param_into_net(loaded_seq, param_dict)
+    loaded_model = Model(network=loaded_seq, loss_fn=loss_fn, optimizer=optimizer)
 
-predictions = []
-last_train_input = Dataconstruct_test()
-print("Start")
+    predictions = []
+    predictions_data = []
+    predictions_data = data_generate()
+    #Add data to predictions
+    last_train_input = Dataconstruct_test()
+    print("Start")
 
-for data in last_train_input.create_dict_iterator():
-    input_tensor = data["data"]
-    predicted = loaded_model.predict(input_tensor)
-    predictions.append(predicted.asnumpy())
-predictions = np.array(predictions)
-print(predictions.shape)
-print("Start plt")
-# 将预测结果绘制出来->>>待添加原始数据
-future = 1000
-plt.figure(figsize=(12, 6))
-plt.title("Predictions for Next 1000 Points")
+    for data in last_train_input.create_dict_iterator():
+        input_tensor = data["data"]
+        predicted = loaded_model.predict(input_tensor)
+        predictions.append(predicted.asnumpy())
 
-def draw(yi, color):
-    plt.plot(np.arange(yi.shape[1]), yi[0, :, 0], color, linewidth=2.0)
-    #plt.plot(np.arange(yi.shape[1], yi.shape[1] + future), yi[0, yi.shape[1]:, 0], color + ':', linewidth=2.0)
+    predictions = np.array(predictions)
+    predictions_data = np.array(predictions_data)
+    print(predictions.shape)
+    print("Start plt")
+    # 将预测结果绘制出来
+    plt.figure(figsize=(18, 6))
+    plt.title("Predictions for Next 1000 Points")
+    def draw_data(yi, color):
+        plt.plot(np.arange(yi.shape[0]), yi[:], color, linewidth=2.0)
+    print(predictions_data.shape)
+    draw_data(predictions_data[0], 'r')
+    draw_data(predictions_data[1], 'g')
+    draw_data(predictions_data[2], 'b')
 
-draw(predictions[0, :, :, :], 'r')
-draw(predictions[1, :, :, :], 'g')
-draw(predictions[2, :, :, :], 'b')
+    def draw(yi, color):
+        plt.plot(np.arange(yi.shape[1]) + 1000, yi[0, :, 0], color + ':', linewidth=2.0)
 
-plt.legend(['Prediction 1', 'Prediction 1 Future', 'Prediction 2', 'Prediction 2 Future', 'Prediction 3', 'Prediction 3 Future'])
-plt.savefig('predictions.png')
-plt.show()
+    draw(predictions[0, :, :, :], 'r')
+    draw(predictions[1, :, :, :], 'g')
+    draw(predictions[2, :, :, :], 'b')
+
+    plt.legend(['Prediction 1', 'Prediction 1 Future', 'Prediction 2', 'Prediction 2 Future', 'Prediction 3', 'Prediction 3 Future'])
+    plt.savefig('predict%d.pdf'%i)
