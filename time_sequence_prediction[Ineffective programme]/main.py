@@ -77,7 +77,7 @@ if __name__ == '__main__':
     seq = Net()
     # loss and optimizer
     loss_fn = nn.MSELoss()
-    optimizer = nn.SGD(seq.trainable_params(), learning_rate=0.8)
+    optimizer = nn.Adam(seq.trainable_params(), learning_rate=0.5)
     model = Model(network=seq, loss_fn=loss_fn, optimizer=optimizer)
     train_data = Dataconstruct()
 
@@ -114,13 +114,13 @@ for i in range(opt.steps):
     # 将预测结果绘制出来
     plt.figure(figsize=(18, 6))
     plt.title("Predictions for Next 1000 Points")
-    def draw_data(yi, color):
-        plt.plot(np.arange(yi.shape[0]), yi[:], color, linewidth=2.0)
-    print(predictions_data.shape)
-    draw_data(predictions_data[0], 'r')
-    draw_data(predictions_data[1], 'g')
-    draw_data(predictions_data[2], 'b')
-
+    # def draw_data(yi, color):
+    #     plt.plot(np.arange(yi.shape[0]), yi[:], color, linewidth=2.0)
+    # print(predictions_data.shape)
+    # draw_data(predictions_data[0], 'r')
+    # draw_data(predictions_data[1], 'g')
+    # draw_data(predictions_data[2], 'b')
+    #不使用LBFGS优化器的情况下无法达到预期
     def draw(yi, color):
         plt.plot(np.arange(yi.shape[1]) + 1000, yi[0, :, 0], color + ':', linewidth=2.0)
 
