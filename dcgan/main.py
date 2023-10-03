@@ -3,8 +3,9 @@ import os
 import random
 import mindspore
 import mindspore.nn as nn
-import mindspore.ops as ops
+from mindspore import Tensor, ops
 from mindvision.dataset import Mnist
+import mindspore.common.initializer as init
 from mindspore.dataset.vision import transforms
 
 parser = argparse.ArgumentParser(description='MindSpore DCGAN Example')
@@ -49,53 +50,65 @@ if opt.dataset == 'mnist':
     down_dataset = Mnist(path=opt.dataroot, split="train", batch_size=opt.batchSize, 
                     repeat_num=1, shuffle=True, resize=32, download=True)
     dataset = down_dataset.run()
+    nc = 1
 else:
     raise ValueError("Just support mnist dataset now")
 #使用transforms对数据集进行预处理
-transforms_list = []
-transforms_list.append(transforms.ToTensor())
-transforms_list.append(transforms.Normalize((0.5,), (0.5,)))
-transform = transforms.Compose(transforms_list)
-
+transform = []
+transform.append(transforms.Resize(size=(opt.imageSize)))
+transform.append(transforms.ToTensor())
+transform.append(transforms.Normalize((0.5,), (0.5,)))
+dataset = dataset.map(operations=transform).batch(opt.batchSize, drop_remainder=True)
 
 ngpu = int(opt.ngpu)
 nz = int(opt.nz)
 ngf = int(opt.ngf)
 ndf = int(opt.ndf)
 
-# custom weights initialization called on netG and netD
-def weights_init(m):
-    classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
-        mindspore.common.initializer.Normal()(m.weight)
-    elif classname.find('BatchNorm') != -1:
-        mindspore.common.initializer.Normal()(m.weight)
-        mindspore.common.initializer.Zero()(m.bias)
-
+# custom weights initialization called on net functions
 # Generator Code [nnCell]
 class Generator(nn.Cell):
     def __init__(self, ngpu):
         super(Generator, self).__init__()
         self.ngpu = ngpu
         self.main = nn.SequentialCell(
-            nn.Conv2dTranspose(in_channels=nz, out_channels=ngf * 8, kernel_size=4, stride=1, padding=0, pad_mode='valid'),
-            nn.BatchNorm2d(num_features=ngf * 8),
+            nn.Conv2dTranspose(in_channels=nz, out_channels=ngf * 8, kernel_size=4,
+                                stride=1, padding=0, pad_mode='valid',
+                                weight_init=init.Normal(0.02, 0.0)),
+            nn.BatchNorm2d(num_features=ngf * 8,
+                            gamma_init=init.Normal(0.02, 1.0),
+                            beta_init=init.Constant(0.0)),
             nn.ReLU(),
-            nn.Conv2dTranspose(in_channels=ngf * 8, out_channels=ngf * 4, kernel_size=4, stride=2, padding=1, pad_mode='pad'),
-            nn.BatchNorm2d(num_features=ngf * 4),
+            nn.Conv2dTranspose(in_channels=ngf * 8, out_channels=ngf * 4, kernel_size=4,
+                                stride=2, padding=1, pad_mode='pad',
+                                weight_init=init.Normal(0.02, 0.0)),
+            nn.BatchNorm2d(num_features=ngf * 4,
+                            gamma_init=init.Normal(0.02, 1.0),
+                            beta_init=init.Constant(0.0)),
             nn.ReLU(),
-            nn.Conv2dTranspose(in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=4, stride=2, padding=1, pad_mode='pad'),
-            nn.BatchNorm2d(num_features=ngf * 2),
+            nn.Conv2dTranspose(in_channels=ngf * 4, out_channels=ngf * 2, kernel_size=4,
+                                stride=2, padding=1, pad_mode='pad',
+                                weight_init=init.Normal(0.02, 0.0)),
+            nn.BatchNorm2d(num_features=ngf * 2,
+                            gamma_init=init.Normal(0.02, 1.0),
+                            beta_init=init.Constant(0.0)),
             nn.ReLU(),
-            nn.Conv2dTranspose(in_channels=ngf * 2, out_channels=ngf, kernel_size=4, stride=2, padding=1, pad_mode='pad'),
-            nn.BatchNorm2d(num_features=ngf),
+            nn.Conv2dTranspose(in_channels=ngf * 2, out_channels=ngf, kernel_size=4, 
+                               stride=2, padding=1, pad_mode='pad',
+                               weight_init=init.Normal(0.02, 0.0)),
+            nn.BatchNorm2d(num_features=ngf,
+                            gamma_init=init.Normal(0.02, 1.0),
+                            beta_init=init.Constant(0.0)),
             nn.ReLU(),
-            nn.Conv2dTranspose(in_channels=ngf, out_channels=1, kernel_size=4, stride=2, padding=1, pad_mode='pad'),
+            nn.Conv2dTranspose(in_channels=ngf, out_channels=nc, kernel_size=4,
+                                stride=2, padding=1, pad_mode='pad',
+                                weight_init=init.Normal(0.02, 0.0)),
             nn.Tanh()
         )
 
     def construct(self, input):
-        return self.main(input)
+        output = self.main(input)
+        return output
     
 # Create the Discriminator [nnCell]
 class Discriminator(nn.Cell):
@@ -103,18 +116,34 @@ class Discriminator(nn.Cell):
         super(Discriminator, self).__init__()
         self.ngpu = ngpu
         self.main = nn.SequentialCell(
-            nn.Conv2d(in_channels=1, out_channels=ndf, kernel_size=4, stride=2, padding=1, pad_mode='pad'),
+            nn.Conv2d(in_channels=nc, out_channels=ndf, kernel_size=4, 
+                      stride=2, padding=1, pad_mode='pad',
+                      weight_init=init.Normal(0.02, 0.0)),
             nn.LeakyReLU(0.2),
-            nn.Conv2d(in_channels=ndf, out_channels=ndf * 2, kernel_size=4, stride=2, padding=1, pad_mode='pad'),
-            nn.BatchNorm2d(num_features=ndf * 2),
+            nn.Conv2d(in_channels=ndf, out_channels=ndf * 2, kernel_size=4,
+                       stride=2, padding=1, pad_mode='pad',
+                       weight_init=init.Normal(0.02, 0.0)),
+            nn.BatchNorm2d(num_features=ndf * 2,
+                            gamma_init=init.Normal(0.02, 1.0),
+                            beta_init=init.Constant(0.0)),
             nn.LeakyReLU(0.2),
-            nn.Conv2d(in_channels=ndf * 2, out_channels=ndf * 4, kernel_size=4, stride=2, padding=1, pad_mode='pad'),
-            nn.BatchNorm2d(num_features=ndf * 4),
+            nn.Conv2d(in_channels=ndf * 2, out_channels=ndf * 4, kernel_size=4,
+                       stride=2, padding=1, pad_mode='pad',
+                       weight_init=init.Normal(0.02, 0.0)),
+            nn.BatchNorm2d(num_features=ndf * 4,
+                            gamma_init=init.Normal(0.02, 1.0),
+                            beta_init=init.Constant(0.0)),
             nn.LeakyReLU(0.2),
-            nn.Conv2d(in_channels=ndf * 4, out_channels=ndf * 8, kernel_size=4, stride=2, padding=1, pad_mode='pad'),
-            nn.BatchNorm2d(num_features=ndf * 8),
+            nn.Conv2d(in_channels=ndf * 4, out_channels=ndf * 8, kernel_size=4,
+                       stride=2, padding=1, pad_mode='pad',
+                       weight_init=init.Normal(0.02, 0.0)),
+            nn.BatchNorm2d(num_features=ndf * 8,
+                            gamma_init=init.Normal(0.02, 1.0),
+                            beta_init=init.Constant(0.0)),
             nn.LeakyReLU(0.2),
-            nn.Conv2d(in_channels=ndf * 8, out_channels=1, kernel_size=4, stride=1, padding=0, pad_mode='valid'),
+            nn.Conv2d(in_channels=ndf * 8, out_channels=1, kernel_size=4,
+                       stride=1, padding=0, pad_mode='valid',
+                       weight_init=init.Normal(0.02, 0.0)),
             nn.Sigmoid()
         )
 
@@ -122,38 +151,73 @@ class Discriminator(nn.Cell):
         output = self.main(input)
         return output.view(-1, 1).squeeze(1)
 
-# Create the Generator
+# Create the Generator and Discriminator
 netG = Generator(ngpu)
-netG.set_train(True)
-# netG.apply(weights_init)
 if opt.netG != '':
     netG.load_param(opt.netG)
-print(netG)
-
-# Create the Discriminator
 netD = Discriminator(ngpu)
-netD.set_train(True)
-# netD.apply(weights_init)
 if opt.netD != '':
     netD.load_param(opt.netD)
-print(netD)
 
-criterion = nn.BCELoss()
+loss_function = nn.BCELoss()
+
+# setup optimizer
+optimizerD = nn.Adam(netD.trainable_params(), learning_rate=opt.lr, 
+                     beta1=opt.beta1, beta2=0.999)
+optimizerG = nn.Adam(netG.trainable_params(), learning_rate=opt.lr, 
+                     beta1=opt.beta1, beta2=0.999)
 
 fixed_noise = ops.randn(opt.batchSize, nz, 1, 1)
 real_label = 1
 fake_label = 0
 
-# setup optimizer
-optimizerD = nn.Adam(netD.trainable_params(), learning_rate=opt.lr, beta1=opt.beta1)
-optimizerG = nn.Adam(netG.trainable_params(), learning_rate=opt.lr, beta1=opt.beta1)
+#Generator forward function
+def g_forward(_z, _valid):
+    _gen_imgs = netG(_z)
+    _g_loss = loss_function(netD(_gen_imgs), _valid)
+    return _g_loss, _gen_imgs
 
-loss_monitor = LossMonitor(50)
-trainD = Model(netD, optimizerD, criterion)
-trainG = Model(netG, optimizerG, criterion)
-#!!不能使用Model进行训练
+def d_forward(_real_imgs, _gen_imgs, _valid, _fake):
+    real_loss = loss_function(netD(_real_imgs), _valid)
+    fake_loss = loss_function(netD(_gen_imgs), _fake)
+    _d_loss = (real_loss + fake_loss) / 2
+    return _d_loss
+
+grad_g = ops.value_and_grad(g_forward, None, netG.trainable_params(),has_aux=True)
+grad_d = ops.value_and_grad(d_forward, None, netD.trainable_params(),has_aux=False)
+
+if opt.dry_run:
+    opt.niter = 1
 # Training Loop
 print("Starting Training Loop...")
+raise ValueError("Stop here")#训练部分会导致严重的内存溢出!
 for epoch in range(opt.niter):
-    # (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
-    # train with real
+    netD.set_train()
+    netG.set_train()
+    for i, data in enumerate(dataset):
+        # train with real
+        optimizerD.clear_grad()
+        real_cpu = data[0]
+        batch_size = real_cpu.shape[0]
+        label = ops.ones((batch_size, 1, 1, 1), mindspore.float32)
+        output = netD(real_cpu)
+        errD_real = loss_function(output, label)
+        errD_real.backward()
+        D_x = output.mean().asnumpy()
+        # train with fake
+        noise = ops.randn(batch_size, nz, 1, 1)
+        fake = netG(noise)
+        label = ops.zeros((batch_size, 1, 1, 1), mindspore.float32)
+        output = netD(fake.detach())
+        errD_fake = loss_function(output, label)
+        errD_fake.backward()
+        D_G_z1 = output.mean().asnumpy()
+        errD = errD_real + errD_fake
+        optimizerD.step()
+        # (2) Update G network: maximize log(D(G(z)))
+        optimizerG.clear_grad()
+        label = ops.ones((batch_size, 1, 1, 1), mindspore.float32)
+        output = netD(fake)
+        errG = loss_function(output, label)
+        errG.backward()
+        D_G_z2 = output.mean().asnumpy()
