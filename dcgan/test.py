@@ -69,7 +69,6 @@ ngf = int(opt.ngf)
 ndf = int(opt.ndf)
 
 # custom weights initialization called on net functions
-# Generator Code [nnCell]
 class Generator(nn.Cell):
     def __init__(self, ngpu):
         super(Generator, self).__init__()
@@ -108,7 +107,6 @@ class Generator(nn.Cell):
                                 weight_init=init.Normal(0.02, 0.0)),
             nn.Tanh()
         )
-
     def construct(self, input):
         output = self.main(input)
         return output
@@ -149,7 +147,6 @@ class Discriminator(nn.Cell):
                        weight_init=init.Normal(0.02, 0.0)),
             nn.Sigmoid()
         )
-
     def construct(self, input):
         output = self.main(input)
         return output.view(-1, 1).squeeze(1)
@@ -186,8 +183,8 @@ def d_forward(_real_imgs, _gen_imgs, _valid, _fake):
     _d_loss = (real_loss + fake_loss) / 2
     return _d_loss
 
-grad_g = ops.value_and_grad(g_forward, None, netG.trainable_params(),has_aux=True)
 grad_d = ops.value_and_grad(d_forward, None, netD.trainable_params(),has_aux=False)
+grad_g = ops.value_and_grad(g_forward, None, netG.trainable_params(),has_aux=True)
 
 if opt.dry_run:
     opt.niter = 1
@@ -199,4 +196,24 @@ for epoch in range(opt.niter):
     netG.set_train()
     for i, (data,_) in enumerate(dataset):
         # train with real
+        real_cpu = data[0]
+        batch_size = real_cpu.shape[0]
+        label = ops.full((batch_size,), real_label, dtype=real_cpu.dtype)
+        
+        print("Start training Discriminator...")
+        output = netD(real_cpu)
+        (errD_real,_),grad_errD_real = grad_d(output, label)#errD_real = criterion(output, label)
+        optimizerD(grad_errD_real)#errD_real.backward()
+        D_x = output.mean().asnumpy()
+
+        print("Start training Generator...")
+        # train with fake
+        noise = ops.randn(batch_size, nz, 1, 1)
+        fake = netG(noise)
+        label.fill(fake_label)
+        output = netD(fake.detach())
+        (errD_fake,_),grad_errD_fake = grad_g(output, label)
+        optimizerD(grad_errD_fake)
+        D_G_z1 = output.mean().asnumpy()
+        errD = errD_real + errD_fake
         
