@@ -56,9 +56,10 @@ else:
 #使用transforms对数据集进行预处理
 transform = [
     transforms.Resize(opt.imageSize),
+    lambda x: (x[0],),
+    #transforms.HWC2CHW(),
     transforms.ToTensor(),
-    transforms.Normalize([0.5], [0.5]),
-    ops.transpose
+    transforms.Normalize([0.5], [0.5])
 ]
 dataset = dataset.map(operations=transform,input_columns="image").batch(opt.batchSize, drop_remainder=True)
 

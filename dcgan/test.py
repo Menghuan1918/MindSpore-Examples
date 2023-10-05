@@ -199,28 +199,4 @@ for epoch in range(opt.niter):
     netG.set_train()
     for i, (data,_) in enumerate(dataset):
         # train with real
-        optimizerD.clear_grad()
-        real_cpu = data[0]
-        batch_size = real_cpu.shape[0]
-        label = ops.ones((batch_size, 1, 1, 1), mindspore.float32)
-        output = netD(real_cpu)
-        errD_real = loss_function(output, label)
-        errD_real.backward()
-        D_x = output.mean().asnumpy()
-        # train with fake
-        noise = ops.randn(batch_size, nz, 1, 1)
-        fake = netG(noise)
-        label = ops.zeros((batch_size, 1, 1, 1), mindspore.float32)
-        output = netD(fake.detach())
-        errD_fake = loss_function(output, label)
-        errD_fake.backward()
-        D_G_z1 = output.mean().asnumpy()
-        errD = errD_real + errD_fake
-        optimizerD.step()
-        # (2) Update G network: maximize log(D(G(z)))
-        optimizerG.clear_grad()
-        label = ops.ones((batch_size, 1, 1, 1), mindspore.float32)
-        output = netD(fake)
-        errG = loss_function(output, label)
-        errG.backward()
-        D_G_z2 = output.mean().asnumpy()
+        
