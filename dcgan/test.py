@@ -217,3 +217,12 @@ for epoch in range(opt.niter):
         D_G_z1 = output.mean().asnumpy()
         errD = errD_real + errD_fake
         
+        label.fill(real_label)  # fake labels are real for generator cost
+        output = netD(fake)
+        (errG,_),grad_errG = grad_g(output, label)
+        optimizerG(grad_errG)
+        D_G_z2 = output.mean().asnumpy()
+
+        print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f'
+              % (epoch, opt.niter, i, len(dataset),
+                 errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))
