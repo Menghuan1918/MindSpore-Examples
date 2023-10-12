@@ -69,7 +69,6 @@ ngf = int(opt.ngf)
 ndf = int(opt.ndf)
 
 # custom weights initialization called on net functions
-# Generator Code [nnCell]
 class Generator(nn.Cell):
     def __init__(self, ngpu):
         super(Generator, self).__init__()
@@ -108,7 +107,6 @@ class Generator(nn.Cell):
                                 weight_init=init.Normal(0.02, 0.0)),
             nn.Tanh()
         )
-
     def construct(self, input):
         output = self.main(input)
         return output
@@ -149,7 +147,6 @@ class Discriminator(nn.Cell):
                        weight_init=init.Normal(0.02, 0.0)),
             nn.Sigmoid()
         )
-
     def construct(self, input):
         output = self.main(input)
         return output.view(-1, 1).squeeze(1)
@@ -186,8 +183,8 @@ def d_forward(_real_imgs, _gen_imgs, _valid, _fake):
     _d_loss = (real_loss + fake_loss) / 2
     return _d_loss
 
-grad_g = ops.value_and_grad(g_forward, None, netG.trainable_params(),has_aux=True)
 grad_d = ops.value_and_grad(d_forward, None, netD.trainable_params(),has_aux=False)
+grad_g = ops.value_and_grad(g_forward, None, netG.trainable_params(),has_aux=True)
 
 if opt.dry_run:
     opt.niter = 1
@@ -199,28 +196,33 @@ for epoch in range(opt.niter):
     netG.set_train()
     for i, (data,_) in enumerate(dataset):
         # train with real
-        optimizerD.clear_grad()
         real_cpu = data[0]
         batch_size = real_cpu.shape[0]
-        label = ops.ones((batch_size, 1, 1, 1), mindspore.float32)
+        label = ops.full((batch_size,), real_label, dtype=real_cpu.dtype)
+        
+        print("Start training Discriminator...")
         output = netD(real_cpu)
-        errD_real = loss_function(output, label)
-        errD_real.backward()
+        (errD_real,_),grad_errD_real = grad_d(output, label)#errD_real = criterion(output, label)
+        optimizerD(grad_errD_real)#errD_real.backward()
         D_x = output.mean().asnumpy()
+
+        print("Start training Generator...")
         # train with fake
         noise = ops.randn(batch_size, nz, 1, 1)
         fake = netG(noise)
-        label = ops.zeros((batch_size, 1, 1, 1), mindspore.float32)
+        label.fill(fake_label)
         output = netD(fake.detach())
-        errD_fake = loss_function(output, label)
-        errD_fake.backward()
+        (errD_fake,_),grad_errD_fake = grad_g(output, label)
+        optimizerD(grad_errD_fake)
         D_G_z1 = output.mean().asnumpy()
         errD = errD_real + errD_fake
-        optimizerD.step()
-        # (2) Update G network: maximize log(D(G(z)))
-        optimizerG.clear_grad()
-        label = ops.ones((batch_size, 1, 1, 1), mindspore.float32)
+        
+        label.fill(real_label)  # fake labels are real for generator cost
         output = netD(fake)
-        errG = loss_function(output, label)
-        errG.backward()
+        (errG,_),grad_errG = grad_g(output, label)
+        optimizerG(grad_errG)
         D_G_z2 = output.mean().asnumpy()
+
+        print('[%d/%d][%d/%d] Loss_D: %.4f Loss_G: %.4f D(x): %.4f D(G(z)): %.4f / %.4f'
+              % (epoch, opt.niter, i, len(dataset),
+                 errD.item(), errG.item(), D_x, D_G_z1, D_G_z2))

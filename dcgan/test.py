@@ -57,7 +57,6 @@ else:
 transform = [
     transforms.Resize(opt.imageSize),
     lambda x: (x[0],),
-    #transforms.HWC2CHW(),
     transforms.ToTensor(),
     transforms.Normalize([0.5], [0.5])
 ]
@@ -194,12 +193,14 @@ for epoch in range(opt.niter):
     print(epoch)
     netD.set_train()
     netG.set_train()
-    for i, (data,_) in enumerate(dataset):
+    for i, (data,a) in enumerate(dataset.create_tuple_iterator()):
         # train with real
-        real_cpu = data[0]
+        real_cpu = data[:,:,:,0:1]
+        print(f"Real_cpu shape:{real_cpu.shape}")
+        real_cpu = real_cpu.transpose((0, 3, 2, 1))
+        print(f"Real_cpu shape:{real_cpu.shape}")
         batch_size = real_cpu.shape[0]
         label = ops.full((batch_size,), real_label, dtype=real_cpu.dtype)
-        
         print("Start training Discriminator...")
         output = netD(real_cpu)
         (errD_real,_),grad_errD_real = grad_d(output, label)#errD_real = criterion(output, label)
