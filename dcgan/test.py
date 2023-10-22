@@ -1,5 +1,8 @@
 import argparse
 import os
+import gzip
+import shutil
+import urllib.request
 import random
 import mindspore
 import mindspore.nn as nn
@@ -7,6 +10,7 @@ from mindspore import Tensor, ops
 from mindvision.dataset import Mnist
 import mindspore.common.initializer as init
 from mindspore.dataset.vision import transforms
+
 
 parser = argparse.ArgumentParser(description='MindSpore DCGAN Example')
 parser.add_argument('--dataset', required=False,default='mnist',help='cifar10 | lsun | mnist |imagenet | folder | lfw | fake')
@@ -47,20 +51,36 @@ if opt.dataroot is None and str(opt.dataset).lower() != 'fake':
 
 #暂时仅使用mnist数据集,其他暂时抛出异常
 if opt.dataset == 'mnist':
-    down_dataset = Mnist(path=opt.dataroot, split="train", batch_size=opt.batchSize, 
-                    repeat_num=1, shuffle=True, resize=32, download=True)
-    dataset = down_dataset.run()
+    file_path = "../../data/MNIST/"
     nc = 1
-else:
-    raise ValueError("Just support mnist dataset now")
+    if not os.path.exists(file_path):
+        # 下载数据集
+        if not os.path.exists('../../data'):
+            os.mkdir('../../data')
+        os.mkdir(file_path)
+        base_url = 'http://yann.lecun.com/exdb/mnist/'
+        file_names = ['train-images-idx3-ubyte.gz', 'train-labels-idx1-ubyte.gz',
+                    't10k-images-idx3-ubyte.gz', 't10k-labels-idx1-ubyte.gz']
+        for file_name in file_names:
+            url = (base_url + file_name).format(**locals())
+            print("正在从" + url + "下载MNIST数据集...")
+            urllib.request.urlretrieve(url, os.path.join(file_path, file_name))
+            with gzip.open(os.path.join(file_path, file_name), 'rb') as f_in:
+                print("正在解压数据集...")
+                with open(os.path.join(file_path, file_name)[:-3], 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            os.remove(os.path.join(file_path, file_name))
 #使用transforms对数据集进行预处理
 transform = [
     transforms.Resize(opt.imageSize),
-    lambda x: (x[0],),
     transforms.ToTensor(),
     transforms.Normalize([0.5], [0.5])
 ]
-dataset = dataset.map(operations=transform,input_columns="image").batch(opt.batchSize, drop_remainder=True)
+dataset = mindspore.dataset.MnistDataset(
+    dataset_dir=file_path,
+    usage='train',
+    shuffle=True
+).map(operations=transform, input_columns="image").batch(opt.batchSize)
 
 ngpu = int(opt.ngpu)
 nz = int(opt.nz)
@@ -107,6 +127,7 @@ class Generator(nn.Cell):
             nn.Tanh()
         )
     def construct(self, input):
+        print(f"Ginput shape:{input.shape}")
         output = self.main(input)
         return output
     
@@ -147,6 +168,7 @@ class Discriminator(nn.Cell):
             nn.Sigmoid()
         )
     def construct(self, input):
+        print(f"Dinput shape:{input.shape}")
         output = self.main(input)
         return output.view(-1, 1).squeeze(1)
 
@@ -176,14 +198,20 @@ def g_forward(_z, _valid):
     _g_loss = loss_function(netD(_gen_imgs), _valid)
     return _g_loss, _gen_imgs
 
-def d_forward(_real_imgs, _gen_imgs, _valid, _fake):
+def d_forward_o(_real_imgs, _gen_imgs, _valid, _fake):
     real_loss = loss_function(netD(_real_imgs), _valid)
     fake_loss = loss_function(netD(_gen_imgs), _fake)
     _d_loss = (real_loss + fake_loss) / 2
     return _d_loss
 
-grad_d = ops.value_and_grad(d_forward, None, netD.trainable_params(),has_aux=False)
-grad_g = ops.value_and_grad(g_forward, None, netG.trainable_params(),has_aux=True)
+def d_forward(_z, _valid):
+    _gen_imgs = netD(_z)
+    _g_loss = loss_function(netG(_gen_imgs), _valid)
+    return _g_loss, _gen_imgs
+
+
+grad_d = ops.value_and_grad(d_forward, None, optimizerD.parameters,has_aux=False)
+grad_g = ops.value_and_grad(g_forward, None, optimizerG.parameters,has_aux=True)
 
 if opt.dry_run:
     opt.niter = 1
@@ -195,13 +223,11 @@ for epoch in range(opt.niter):
     netG.set_train()
     for i, (data,a) in enumerate(dataset.create_tuple_iterator()):
         # train with real
-        real_cpu = data[:,:,:,0:1]
-        print(f"Real_cpu shape:{real_cpu.shape}")
-        real_cpu = real_cpu.transpose((0, 3, 2, 1))
-        print(f"Real_cpu shape:{real_cpu.shape}")
+        real_cpu = data
         batch_size = real_cpu.shape[0]
         label = ops.full((batch_size,), real_label, dtype=real_cpu.dtype)
         print("Start training Discriminator...")
+        print(f"Real_cpu shape:{real_cpu.shape}")
         output = netD(real_cpu)
         (errD_real,_),grad_errD_real = grad_d(output, label)#errD_real = criterion(output, label)
         optimizerD(grad_errD_real)#errD_real.backward()
